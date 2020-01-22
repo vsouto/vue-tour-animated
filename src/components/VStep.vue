@@ -1,5 +1,5 @@
 <template>
-  <div class="v-step" :id="'v-step-' + hash" :ref="'v-step-' + hash">
+  <div class="v-step" :id="'v-step-' + hash" :class="{ 'v-step-big' : isBig }" :ref="'v-step-' + hash">
     <slot name="header">
       <div v-if="step.header" class="v-step__header">
         <div v-if="step.header.title" v-html="step.header.title"></div>
@@ -30,136 +30,140 @@
 </template>
 
 <script>
-  import Popper from 'popper.js'
-  import jump from 'jump.js'
-  import sum from 'hash-sum'
-  import { DEFAULT_STEP_OPTIONS, HIGHLIGHT } from '../shared/constants'
+import Popper from 'popper.js'
+import jump from 'jump.js'
+import sum from 'hash-sum'
+import { DEFAULT_STEP_OPTIONS, HIGHLIGHT } from '../shared/constants'
 
-  export default {
-    name: 'v-step',
-    props: {
-      step: {
-        type: Object
-      },
-      previousStep: {
-        type: Function
-      },
-      nextStep: {
-        type: Function
-      },
-      stop: {
-        type: Function
-      },
-      isFirst: {
-        type: Boolean
-      },
-      isLast: {
-        type: Boolean
-      },
-      labels: {
-        type: Object
-      },
-      highlight: {
-        type: Boolean
-      }
+export default {
+  name: 'v-step',
+  props: {
+    step: {
+      type: Object
     },
-    data () {
-      return {
-        hash: sum(this.step.target),
-        targetElement: document.querySelector(this.step.target)
-      }
+    previousStep: {
+      type: Function
     },
-    computed: {
-      params () {
-        return {
-          ...DEFAULT_STEP_OPTIONS,
-          ...{ highlight: this.highlight }, // Use global tour highlight setting first
-          ...this.step.params // Then use local step parameters if defined
-        }
-      }
+    nextStep: {
+      type: Function
     },
-    methods: {
-      createStep () {
-        // TODO: debug mode
-        // console.log('[Vue Tour] The target element ' + this.step.target + ' of .v-step[id="' + this.hash + '"] is:', targetElement)
-
-        if (this.targetElement) {
-          this.enableScrolling()
-          this.createHighlight()
-
-          /* eslint-disable no-new */
-          new Popper(
-            this.targetElement,
-            this.$refs['v-step-' + this.hash],
-            this.params
-          )
-        } else {
-          console.error('[Vue Tour] The target element ' + this.step.target + ' of .v-step[id="' + this.hash + '"] does not exist!')
-          this.$emit('targetNotFound', this.step)
-        }
-      },
-      enableScrolling () {
-        if (this.params.enableScrolling) {
-          if (this.step.duration || this.step.offset) {
-            let jumpOptions = {
-              duration: this.step.duration || 1000,
-              offset: this.step.offset || 0,
-              callback: undefined,
-              a11y: false
-            }
-
-            jump(this.targetElement, jumpOptions)
-          } else {
-            // Use the native scroll by default if no scroll options has been defined
-            this.targetElement.scrollIntoView({ behavior: 'smooth' })
-          }
-        }
-      },
-      isHighlightEnabled () {
-        console.log(`[Vue Tour] Highlight is ${this.params.highlight ? 'enabled' : 'disabled'} for .v-step[id="${this.hash}"]`)
-        return this.params.highlight
-      },
-      createHighlight () {
-        if (this.isHighlightEnabled()) {
-          document.body.classList.add(HIGHLIGHT.CLASSES.ACTIVE)
-          const transitionValue = window.getComputedStyle(this.targetElement).getPropertyValue('transition')
-
-          // Make sure our background doesn't flick on transitions
-          if (transitionValue !== 'all 0s ease 0s') {
-            this.targetElement.style.transition = `${transitionValue}, ${HIGHLIGHT.TRANSITION}`
-          }
-
-          this.targetElement.classList.add(HIGHLIGHT.CLASSES.TARGET_HIGHLIGHTED)
-          // The element must have a position, if it doesn't have one, add a relative position class
-          if (!this.targetElement.style.position) {
-            this.targetElement.classList.add(HIGHLIGHT.CLASSES.TARGET_RELATIVE)
-          }
-        } else {
-          document.body.classList.remove(HIGHLIGHT.CLASSES.ACTIVE)
-        }
-      },
-      removeHighlight () {
-        if (this.isHighlightEnabled()) {
-          const target = this.targetElement
-          const currentTransition = this.targetElement.style.transition
-          this.targetElement.classList.remove(HIGHLIGHT.CLASSES.TARGET_HIGHLIGHTED)
-          this.targetElement.classList.remove(HIGHLIGHT.CLASSES.TARGET_RELATIVE)
-          // Remove our transition when step is finished.
-          if (currentTransition.includes(HIGHLIGHT.TRANSITION)) {
-            setTimeout(() => {
-              target.style.transition = currentTransition.replace(`, ${HIGHLIGHT.TRANSITION}`, '')
-            }, 0)
-          }
-        }
-      }
+    stop: {
+      type: Function
     },
-    mounted () {
-      this.createStep()
+    isFirst: {
+      type: Boolean
     },
-    destroyed () {
-      this.removeHighlight()
+    isLast: {
+      type: Boolean
+    },
+    labels: {
+      type: Object
+    },
+    highlight: {
+      type: Boolean
+    },
+    isBig: {
+      type: Boolean,
+      default: false
     }
+  },
+  data () {
+    return {
+      hash: sum(this.step.target),
+      targetElement: document.querySelector(this.step.target)
+    }
+  },
+  computed: {
+    params () {
+      return {
+        ...DEFAULT_STEP_OPTIONS,
+        ...{ highlight: this.highlight }, // Use global tour highlight setting first
+        ...this.step.params // Then use local step parameters if defined
+      }
+    }
+  },
+  methods: {
+    createStep () {
+      // TODO: debug mode
+      // console.log('[Vue Tour] The target element ' + this.step.target + ' of .v-step[id="' + this.hash + '"] is:', targetElement)
+
+      if (this.targetElement) {
+        this.enableScrolling()
+        this.createHighlight()
+
+        /* eslint-disable no-new */
+        new Popper(
+          this.targetElement,
+          this.$refs['v-step-' + this.hash],
+          this.params
+        )
+      } else {
+        console.error('[Vue Tour] The target element ' + this.step.target + ' of .v-step[id="' + this.hash + '"] does not exist!')
+        this.$emit('targetNotFound', this.step)
+      }
+    },
+    enableScrolling () {
+      if (this.params.enableScrolling) {
+        if (this.step.duration || this.step.offset) {
+          let jumpOptions = {
+            duration: this.step.duration || 1000,
+            offset: this.step.offset || 0,
+            callback: undefined,
+            a11y: false
+          }
+
+          jump(this.targetElement, jumpOptions)
+        } else {
+          // Use the native scroll by default if no scroll options has been defined
+          this.targetElement.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
+    },
+    isHighlightEnabled () {
+      console.log(`[Vue Tour] Highlight is ${this.params.highlight ? 'enabled' : 'disabled'} for .v-step[id="${this.hash}"]`)
+      return this.params.highlight
+    },
+    createHighlight () {
+      if (this.isHighlightEnabled()) {
+        document.body.classList.add(HIGHLIGHT.CLASSES.ACTIVE)
+        const transitionValue = window.getComputedStyle(this.targetElement).getPropertyValue('transition')
+
+        // Make sure our background doesn't flick on transitions
+        if (transitionValue !== 'all 0s ease 0s') {
+          this.targetElement.style.transition = `${transitionValue}, ${HIGHLIGHT.TRANSITION}`
+        }
+
+        this.targetElement.classList.add(HIGHLIGHT.CLASSES.TARGET_HIGHLIGHTED)
+        // The element must have a position, if it doesn't have one, add a relative position class
+        if (!this.targetElement.style.position) {
+          this.targetElement.classList.add(HIGHLIGHT.CLASSES.TARGET_RELATIVE)
+        }
+      } else {
+        document.body.classList.remove(HIGHLIGHT.CLASSES.ACTIVE)
+      }
+    },
+    removeHighlight () {
+      if (this.isHighlightEnabled()) {
+        const target = this.targetElement
+        const currentTransition = this.targetElement.style.transition
+        this.targetElement.classList.remove(HIGHLIGHT.CLASSES.TARGET_HIGHLIGHTED)
+        this.targetElement.classList.remove(HIGHLIGHT.CLASSES.TARGET_RELATIVE)
+        // Remove our transition when step is finished.
+        if (currentTransition.includes(HIGHLIGHT.TRANSITION)) {
+          setTimeout(() => {
+            target.style.transition = currentTransition.replace(`, ${HIGHLIGHT.TRANSITION}`, '')
+          }, 0)
+        }
+      }
+    }
+  },
+  mounted () {
+    this.createStep()
+  },
+  destroyed () {
+    this.removeHighlight()
   }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -175,6 +179,10 @@
     text-align: center;
     z-index: 10000;
     margin-left: 4%;
+  }
+
+  .v-step-big {
+    min-height: 232px !important;
   }
 
   .v-step .v-step__arrow {

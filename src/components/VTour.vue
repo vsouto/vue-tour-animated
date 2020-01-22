@@ -23,6 +23,7 @@
         :is-last="isLast"
         :labels="customOptions.labels"
         :highlight="customOptions.highlight"
+        :is-big="isBig"
       >
         <!--<div v-if="index === 2" slot="actions">
           <a @click="nextStep">Next step</a>
@@ -52,6 +53,10 @@ export default {
     callbacks: {
       type: Object,
       default: () => { return DEFAULT_CALLBACKS }
+    },
+    isBig: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
